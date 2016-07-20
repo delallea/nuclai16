@@ -14,39 +14,28 @@ import numpy as np
 
 import data
 
-maxlen = 40
+seqlen = 40
+seqstep = 3
+
 
 # The tweet length should be above the learned sequence length.
-tweets, text, chars = data.read('tweets78k.txt', minlen=maxlen)
-#import pdb; pdb.set_trace()
+tweets, text, chars = data.read('tweets78k.txt', minlen=seqlen)
 print('Number of characters:', len(chars))
 
 char_indices = dict((c, i) for i, c in enumerate(chars))
 indices_char = dict((i, c) for i, c in enumerate(chars))
 
 
-# Cut the text in semi-redundant sequences of maxlen characters.
-step = 3
+# Cut the text in semi-redundant sequences of seqlen characters.
+
 sentences = []
 next_chars = []
-for i in range(0, len(text) - maxlen, step):
-    sentences.append(text[i: i + maxlen])
-    next_chars.append(text[i + maxlen])
+for i in range(0, len(text) - seqlen, seqstep):
+    sentences.append(text[i: i + seqlen])
+    next_chars.append(text[i + seqlen])
 print('Number of sequences:', len(sentences))
 
 text = None
-
-print('Vectorization...')
-X = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
-y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
-for i, sentence in enumerate(sentences):
-    for t, char in enumerate(sentence):
-        X[i, t, char_indices[char]] = 1.0
-    y[i, char_indices[next_chars[i]]] = 1.0
-
-sentences = None
-next_chars = None
-
 
 def build_model(model_in=None, model_out=None):
     if model_in:
@@ -57,7 +46,7 @@ def build_model(model_in=None, model_out=None):
     else:
         print('Build model...')
         model = Sequential()
-        model.add(LSTM(64, return_sequences=True, input_shape=(maxlen, len(chars))))
+        model.add(LSTM(64, return_sequences=True, input_shape=(seqlen, len(chars))))
         model.add(Dropout(0.2))
         model.add(LSTM(64, return_sequences=False))
         model.add(Dropout(0.2))
@@ -86,11 +75,11 @@ def generate_tweets(model):
         print()
         print('----- Diversity:', diversity)
 
-        sentence = random.choice(tweets)[:maxlen-1] + data.STX
+        sentence = random.choice(tweets)[:seqlen-1] + data.STX
         print('----- Generating with seed: "' + sentence + '"')
 
         for i in range(140):
-            x = np.zeros((1, maxlen, len(chars)))
+            x = np.zeros((1, seqlen, len(chars)))
             for t, char in enumerate(sentence):
                 x[0, t, char_indices[char]] = 1.
 
@@ -105,15 +94,23 @@ def generate_tweets(model):
 
 
 def train(model):
+    print('Vectorization...')
+    X = np.zeros((len(sentences), seqlen, len(chars)), dtype=np.bool)
+    y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
+    for i, sentence in enumerate(sentences):
+        for t, char in enumerate(sentence):
+            X[i, t, char_indices[char]] = 1.0
+        y[i, char_indices[next_chars[i]]] = 1.0
+
     # Train the model, output generated text after each iteration.
     try: 
 
-        for iteration in range(1, 50):
+        for iteration in range(1, 25):
             print()
             print('-' * 50)
             print('Iteration', iteration)
 
-            idx = np.random.randint(X.shape[0], size=100000)
+            idx = np.random.randint(X.shape[0], size=10000)
             model.fit(X[idx], y[idx], batch_size=128, nb_epoch=1)
             generate_tweets(model)
 
