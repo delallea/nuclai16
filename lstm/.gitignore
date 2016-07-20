@@ -1,0 +1,7 @@
+.idea
+lstm256x3.h5f
+lstm256x3.json
+lstm512.h5f
+lstm512.json
+tweets78k.small.txt
+tweets78k.txt
