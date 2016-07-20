@@ -18,6 +18,7 @@ maxlen = 40
 
 # The tweet length should be above the learned sequence length.
 tweets, text, chars = data.read('tweets78k.txt', minlen=maxlen)
+#import pdb; pdb.set_trace()
 print('Number of characters:', len(chars))
 
 char_indices = dict((c, i) for i, c in enumerate(chars))
@@ -33,6 +34,8 @@ for i in range(0, len(text) - maxlen, step):
     next_chars.append(text[i + maxlen])
 print('Number of sequences:', len(sentences))
 
+text = None
+
 print('Vectorization...')
 X = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
 y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
@@ -41,6 +44,8 @@ for i, sentence in enumerate(sentences):
         X[i, t, char_indices[char]] = 1.0
     y[i, char_indices[next_chars[i]]] = 1.0
 
+sentences = None
+next_chars = None
 
 
 def build_model(model_in=None, model_out=None):
