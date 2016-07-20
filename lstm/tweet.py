@@ -88,7 +88,7 @@ def generate_tweets(model):
             next_char = indices_char[next_index]
 
             sentence = sentence[1:] + next_char
-            sys.stdout.write(next_char)
+            sys.stdout.write(next_char if ord(next_char) < 128 else '?')
             sys.stdout.flush()
         print()
 
